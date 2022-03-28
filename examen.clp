@@ -11,15 +11,17 @@
 
 (defrule coger_caja
     (declare (salience 10))
-    (robot ?pos max ?max current ?current)
-    (palet ?num ?prod cajas ?cajas)
+    ?r <- (robot ?pos max ?max current ?current)
+    ?p <- (palet ?num ?prod cajas ?cajas)
     (pedido $?ini ?tipo ?n $?fin )
-    (recogido $?ini2 ?tipo2 ?n2 $?fin2 )
+    ?rec <- (recogido $?ini2 ?tipo2 ?n2 $?fin2 )
     (test (and (= ?pos ?num) (eq ?tipo ?prod)))
     (test (and (< ?current ?max) (> ?cajas 0)))
     (test (and (eq ?tipo ?tipo2) (< ?n2 ?n)))
     =>
-    ()
+    (retract ?r)
+    (retract ?p)
+    (retract ?rec)
     (assert (robot ?pos max ?max current (+ ?current 1)))
     (assert (palet ?num ?prod cajas (- ?cajas 1)))
     (assert (recogido $?ini2 ?tipo2 (+ ?n2 1) $?fin2))
@@ -32,12 +34,18 @@
     (palets ?n)
     (test (and (< ?pos ?n) (< ?current ?max) ))
     =>
+    ( printout t "Moviendo" crlf )
     (assert (robot (+ ?pos 1) max ?max current ?current))
 )
 
 (defrule entregar
     (declare (salience 15))
     (robot ?pos max ?max current ?current)
-    (pedido $?ini ?tipo ?n $?fin )
-    (test  )
+    (pedido $?x)
+    (recogido $?y)
+    (test (eq $?x $?y))
+    =>
+    (assert (robot 0 max ?max current ?current)) 
+    ( printout t "Pedido entregado" crlf )
+    (halt)
 )
